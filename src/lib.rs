@@ -7,25 +7,6 @@ pub mod eywa {
     pub const FILES: &i32 = &0;
     pub const DIRECTORIES: &i32 = &1;
 
-    ///
-    /// # Create a new file
-    ///
-    /// Create a new file only if not exist
-    ///
-    /// - `name`    The name of the filename to create
-    ///
-    #[macro_export]
-    macro_rules! touch {
-        ($name:expr) => {
-            if std::path::Path::new($name).is_file() {
-                panic!("{}", format!("The {} file already exist", $name));
-            } else {
-                std::fs::File::create($name)
-                    .expect(format!("Failed to create the {} file", $name).as_str());
-            }
-        };
-    }
-
     #[macro_export]
     macro_rules! touch_if_not_exists {
         ($name:expr) => {
@@ -35,13 +16,43 @@ pub mod eywa {
             }
         };
     }
+
+    ///
+    /// # Create a directory
+    ///
+    /// - `name` The dirname to create
+    /// - `mode` The dir mode
+    /// - `recursive` The recursive option
+    ///
     #[macro_export]
-    macro_rules! mkdir_if_not_exists {
-        ($name:expr) => {
-            !if std::path::Path::new($name).is_file() {
-                std::fs::create_dir($name)
-                    .expect(format!("Failed to create the {} directory", $name).as_str());
-            }
+    macro_rules! mkdir {
+        ($name:expr, $mode:expr, $recursive:expr) => {
+            use std::os::unix::fs::DirBuilderExt;
+            let mut builder = std::fs::DirBuilder::new();
+            builder.mode($mode);
+            builder.recursive($recursive);
+            builder
+                .create($name)
+                .expect(format!("Failed to create the {} directory", $name).as_str());
+        };
+    }
+
+    ///
+    /// # Create a file
+    ///
+    /// - `name` The dirname to create
+    /// - `mode` The dir mode
+    ///
+    #[macro_export]
+    macro_rules! touch {
+        ($name:expr, $mode:expr) => {
+            use std::os::unix::fs::PermissionsExt;
+            let f = std::fs::File::create($name)
+                .expect(format!("Failed to create the {} filename", $name).as_str());
+            let metadata = f.metadata().expect("meta");
+            let mut permissions = metadata.permissions();
+            permissions.set_mode($mode);
+            assert_eq!(permissions.mode(), $mode);
         };
     }
 
@@ -91,7 +102,7 @@ pub mod eywa {
     ///
     #[macro_export]
     macro_rules! print {
-        ($file:expr,$success_callback:expr,$failure_callback:expr) => {
+        ($file:expr,$success_callback:ident,$failure_callback:ident) => {
             match Impress::default().print($file).status {
                 JobStatus::SUCCESS => $success_callback($file),
                 JobStatus::FAILED => failure_callback($file),
@@ -109,7 +120,7 @@ pub mod eywa {
     ///
     #[macro_export]
     macro_rules! print_at {
-        ($file:expr,$printer:expr,$success_callback:expr,$failure_callback:expr) => {
+        ($file:expr,$printer:expr,$success_callback:ident,$failure_callback:ident) => {
             match Impress::default().print_at($printer, $file).status {
                 JobStatus::SUCCESS => $success_callback($file),
                 JobStatus::FAILED => failure_callback($file),
@@ -209,25 +220,6 @@ pub mod eywa {
     }
 
     ///
-    /// # Create a new directory
-    ///
-    /// Create a new directory if not exist
-    ///
-    /// - `name`    The name of the directory to create
-    ///
-    #[macro_export]
-    macro_rules! mkdir {
-        ($name:expr) => {
-            if std::path::Path::new($name).is_dir() {
-                panic!("{}", format!("The {} directory already exist", $name));
-            } else {
-                std::fs::create_dir($name)
-                    .expect(format!("Failed to create the {} directory", $name).as_str());
-            }
-        };
-    }
-
-    ///
     /// # Remove an existing directory
     ///
     /// Remove a directory only if exist
@@ -307,7 +299,6 @@ pub mod eywa {
     ///
     /// - `path`    The path to parse
     /// - `file`    The file to find    
-    ///
     ///
     #[macro_export]
     macro_rules! file_exists {
@@ -410,22 +401,15 @@ pub mod eywa {
 #[cfg(test)]
 mod test {
     use crate::{
-        directory_contents, directory_exists, file_exists, get_contents, get_dirs, get_files,
-        helpful::{DIRECTORIES, FILES},
-        mkdir, rm, rmdir, touch, touch_with_content,
+        directory_contents, directory_exists,
+        eywa::{DIRECTORIES, FILES},
+        file_exists, get_contents, get_dirs, get_files, mkdir, rmdir, touch,
     };
 
     #[test]
-    pub fn test_touch() {
-        touch!("Doc");
-        rm!("Doc");
-        touch_with_content!("READ", "readme");
-        rm!("READ");
-    }
-
-    #[test]
     pub fn test_dir() {
-        mkdir!("documentation");
+        mkdir!("documentation", 0o755, false);
+        touch!("documentation/README.md", 0o755);
         rmdir!("documentation");
     }
 

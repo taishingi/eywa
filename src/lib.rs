@@ -1,9 +1,9 @@
-pub mod helpful {
+pub mod eywa {
     use std::fs::ReadDir;
     use std::io::BufRead;
     use std::path::Path;
     use std::{fs::File, io::BufReader};
-
+    pub mod print;
     pub const FILES: &i32 = &0;
     pub const DIRECTORIES: &i32 = &1;
 
@@ -78,6 +78,23 @@ pub mod helpful {
                     .expect(format!("Failed to create the {} file", $name).as_str());
                 x.write_all($content.as_bytes())
                     .expect(format!("Failed add the content in the {} file", $name).as_str());
+            }
+        };
+    }
+
+    ///
+    /// # Print a file
+    ///
+    /// - `file`                    The name of the filename to print
+    /// - `success_callback`        The callaback to call on success
+    /// - `failure_callback`        The callaback to call on failure
+    ///
+    #[macro_export]
+    macro_rules! print {
+        ($file:expr,$success_callback:expr,$failure_callback:expr) => {
+            match Impress::default().print($file).status {
+                JobStatus::SUCCESS => $success_callback($file),
+                JobStatus::FAILED => failure_callback($file),
             }
         };
     }

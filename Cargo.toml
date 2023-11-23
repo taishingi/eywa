@@ -12,3 +12,4 @@ documentation = "https://docs.rs/eywa/"
 [dependencies]
 colored_truecolor = "0.1.0"
 glob = "0.3.1"
+printers = "1.2.0"

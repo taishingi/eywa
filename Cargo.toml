@@ -1,6 +1,6 @@
 [package]
 name = "eywa"
-version = "0.1.8"
+version = "0.2.0"
 edition = "2021"
 description = "A helpers toolkit to make programs more simply"
 license = "GPL-2.0-or-later"

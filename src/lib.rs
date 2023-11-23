@@ -100,6 +100,23 @@ pub mod eywa {
     }
 
     ///
+    /// # Print a file to at printer
+    ///
+    /// - `file`                    The name of the filename to print
+    /// - `printer`                 The printer to use
+    /// - `success_callback`        The callaback to call on success
+    /// - `failure_callback`        The callaback to call on failure
+    ///
+    #[macro_export]
+    macro_rules! print_at {
+        ($file:expr,$printer:expr,$success_callback:expr,$failure_callback:expr) => {
+            match Impress::default().print_at($printer, $file).status {
+                JobStatus::SUCCESS => $success_callback($file),
+                JobStatus::FAILED => failure_callback($file),
+            }
+        };
+    }
+    ///
     /// # Remove an exiting file
     ///
     /// - `filename`    The path of the filename to remove
